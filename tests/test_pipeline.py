@@ -30,6 +30,9 @@ def test_feature_sequence_and_recommendation_pipeline_shapes():
     assert x_tab.shape[0] == y_tab.shape[0] == len(raw) - 1
     assert x_seq.shape[1:] == (20, 45)
     assert y_seq.shape[1] == 45
-    rec, scores = build_recommendations({"RNN": y_seq[-1], "LSTM": y_seq[-2], "Transformer": y_seq[-3], "RandomForest": y_seq[-4], "MLP": y_seq[-5]})
+    rec, scores = build_recommendations(
+        {"RNN": y_seq[-1], "LSTM": y_seq[-2], "Transformer": y_seq[-3], "RandomForest": y_seq[-4], "MLP": y_seq[-5]},
+        sets_per_model={"RNN": 3, "LSTM": 2, "Transformer": 2, "RandomForest": 2, "MLP": 1},
+    )
     assert rec.shape[0] == 10
     assert scores.shape[0] == 225
