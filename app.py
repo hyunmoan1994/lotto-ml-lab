@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import html
+import os
+
 import pandas as pd
 import streamlit as st
 
@@ -25,8 +28,55 @@ st.warning(
     "이 앱은 실험용 예측 도구입니다. 로또 당첨을 보장하지 않으며, 추천 결과는 구매 판단의 근거가 될 수 없습니다."
 )
 
+
+def _env(name: str, default: str = "") -> str:
+    return os.getenv(name, default).strip()
+
+
+def render_ad_slot(location: str = "top") -> None:
+    title = _env("AD_TITLE", "광고 문의 / 후원 배너")
+    body = _env("AD_TEXT", "이 영역은 제휴 광고, 후원 링크, 서비스 홍보 배너로 사용할 수 있습니다.")
+    url = _env("AD_URL", "https://github.com/hyunmoan1994/lotto-ml-lab")
+    image_url = _env("AD_IMAGE_URL")
+    sponsor = _env("AD_SPONSOR", "Sponsored")
+
+    compact = location == "sidebar"
+    image_html = ""
+    if image_url:
+        image_html = (
+            f'<img src="{html.escape(image_url)}" alt="{html.escape(title)}" '
+            'style="width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-bottom:8px;" />'
+        )
+
+    padding = "12px" if compact else "16px 18px"
+    body_size = "0.86rem" if compact else "0.94rem"
+    st.markdown(
+        f"""
+        <a href="{html.escape(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
+          <div style="
+            border:1px solid #d7e3dc;
+            background:#f7fbf8;
+            border-radius:8px;
+            padding:{padding};
+            margin:10px 0 18px 0;
+            color:#1f2933;
+          ">
+            <div style="font-size:0.72rem;color:#667085;margin-bottom:6px;">{html.escape(sponsor)}</div>
+            {image_html}
+            <div style="font-weight:700;margin-bottom:4px;">{html.escape(title)}</div>
+            <div style="font-size:{body_size};line-height:1.45;color:#475467;">{html.escape(body)}</div>
+          </div>
+        </a>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+render_ad_slot("top")
+
 with st.sidebar:
     st.header("설정")
+    render_ad_slot("sidebar")
     max_draws = st.number_input("최대 조회 회차", min_value=300, max_value=3000, value=1300, step=50)
     min_draws = st.number_input("최소 수집 회차", min_value=300, max_value=1000, value=300, step=50)
     recent_draws = st.number_input("최근 학습 회차 수", min_value=300, max_value=1200, value=500, step=50)
@@ -176,6 +226,7 @@ if st.button("모델별 추천 생성"):
 
 if "recommendations" in st.session_state:
     st.dataframe(st.session_state.recommendations, use_container_width=True)
+    render_ad_slot("results")
     st.subheader("모델별 번호 score")
     preview = (
         st.session_state.scores.sort_values(["model", "score"], ascending=[True, False])
